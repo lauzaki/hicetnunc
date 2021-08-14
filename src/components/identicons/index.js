@@ -24,6 +24,7 @@ function newPath(path) {
 }
 
 function avatar(address) {
+  console.log('trim', address)
   const decoded = base58.decode(address.trim().substr(3))
   const hex = decoded.toString('hex')
   const check = hex.split('').reduce((sum, x) => sum + parseInt(x, 16), 0)
@@ -292,7 +293,7 @@ export const Identicon = ({ address = '', logo }) => {
     return (
       <div className={styles.identicon}>
         <img
-          src={`https://services.tzkt.io/v1/avatars2/${address}`}
+          src={'https://ipfs.io/ipfs/' + logo.split('//')[1]}
           alt="identicon"
         />
       </div>

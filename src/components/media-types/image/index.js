@@ -8,14 +8,26 @@ export const ImageComponent = ({
   previewUri,
   onDetailView,
   preview,
+  displayView
 }) => {
   let src = onDetailView ? artifactUri : displayUri || artifactUri
   if (preview) {
     src = previewUri
   }
-  return (
-    <div className={styles.container}>
-      <LazyLoadImage className={styles.image} src={src} alt="💥" />
-    </div>
-  )
+
+  if (displayView) {
+    return (
+      <div className={styles.container}>
+        <LazyLoadImage className={styles.image} src={src} alt="💥" />
+      </div>
+    )
+  } else {
+    return (
+      <div>
+        <div>
+          <LazyLoadImage className={styles.style} src={src} alt="💥" />
+        </div>
+      </div>
+    )
+  }
 }

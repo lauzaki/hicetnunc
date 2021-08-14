@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { iOS } from '../../../utils/os'
 import styles from './styles.module.scss'
+import './style.css'
 
 export const VideoComponent = ({
   artifactUri,
@@ -9,6 +10,7 @@ export const VideoComponent = ({
   preview,
   interactive,
   inView,
+  displayView
 }) => {
   const domElement = useRef()
 
@@ -47,19 +49,37 @@ export const VideoComponent = ({
     }
   }, [inView])
 
-  return (
-    <div className={styles.container}>
-      <video
-        ref={domElement}
-        className={styles.video}
-        autoPlay={inView}
-        playsInline
-        muted
-        loop
-        controls={interactive}
-        src={preview ? previewUri : artifactUri}
-        poster={displayUri}
-      />
-    </div>
-  )
+  if (displayView) {
+    return (
+      <div className={styles.video}>
+        <video
+          ref={domElement}
+          className={styles.displayviewVideo}
+          autoPlay={inView}
+          playsInline
+          muted
+          loop
+          controls={interactive}
+          src={preview ? previewUri : artifactUri}
+          poster={displayUri}
+        />
+      </div>
+    )
+  } else {
+    return (
+      <>
+        <video
+          ref={domElement}
+          className={styles.video}
+          autoPlay={inView}
+          playsInline
+          muted
+          loop
+          controls={interactive}
+          src={preview ? previewUri : artifactUri}
+          poster={displayUri}
+        />
+      </>
+    )
+  }
 }

@@ -3,31 +3,92 @@
 import React, { Component } from 'react'
 import { HicetnuncContext } from '../../context/HicetnuncContext'
 import { Container, Padding, Page } from '../../components/layout'
+import { BottomBanner } from '../../components/bottom-banner'
 import { Input, Textarea } from '../../components/input'
 import { Button, Curate } from '../../components/button'
 import { Upload } from '../../components/upload'
-
+import { Identicon } from '../../components/identicons'
 import { SigningType } from '@airgap/beacon-sdk'
 import { char2Bytes } from '@taquito/utils'
 import styles from './styles.module.scss'
+import axios from 'axios'
 const { create } = require('ipfs-http-client')
 const infuraUrl = 'https://ipfs.infura.io:5001'
+const ipfs = create(infuraUrl)
 
 const ls = require('local-storage')
+
+const query_tz = `
+query addressQuery($address: String!) {
+  hic_et_nunc_holder(where: { address: {_eq: $address}}) {
+    address
+    name
+    hdao_balance
+    metadata
+    metadata_file
+  }
+}
+`
+
+async function fetchTz(addr) {
+  const { errors, data } = await fetchGraphQL(query_tz, 'addressQuery', {
+    address: addr,
+  })
+  if (errors) {
+    console.error(errors)
+  }
+  const result = data.hic_et_nunc_holder
+  // console.log({ result })
+  return result
+}
+
+async function fetchGraphQL(operationsDoc, operationName, variables) {
+  let result = await fetch('https://api.hicdex.com/v1/graphql', {
+    method: 'POST',
+    body: JSON.stringify({
+      query: operationsDoc,
+      variables: variables,
+      operationName: operationName,
+    }),
+  })
+  return await result.json()
+}
 
 export class Config extends Component {
   static contextType = HicetnuncContext
 
   state = {
+    loading: true,
     vote: 0,
+    address: '',
     subjkt: '',
     description: '',
     social_media: '',
+    identicon: '',
     subjktUri: '', // uploads image
+    cid : undefined
   }
 
-  componentWillMount = () => {
-    this.context.syncTaquito()
+  componentWillMount = async () => {
+    await this.context.syncTaquito()
+    this.setState({ address: this.context.acc.address })
+    let res = await fetchTz(this.context.acc.address)
+
+    this.context.subjktInfo = res[0]
+    console.log(this.context.subjktInfo)
+
+    if (this.context.subjktInfo) {
+    let cid = await axios.get('https://ipfs.io/ipfs/'+ (this.context.subjktInfo.metadata_file).split('//')[1]).then(res => res.data) 
+
+    this.context.subjktInfo.gravatar = cid
+    
+    if (cid.description) this.setState({ description : cid.description })
+    if (cid.identicon) this.setState({ identicon : cid.identicon })
+    if (this.context.subjktInfo.name) this.setState({ subjkt : this.context.subjktInfo.name })
+
+    }
+    //console.log(this.context.subjktInfo)
+    this.setState({ loading : false })
   }
 
   handleChange = (e) => {
@@ -38,28 +99,37 @@ export class Config extends Component {
   // config subjkt
 
   subjkt_config = async () => {
-    const ipfs = create(infuraUrl)
-    /*     const [file] = this.state.selectedFile
-    
-        const buffer = Buffer.from(await file.arrayBuffer())
-    
-        this.setState({ avatar: 'ipfs://' + (await ipfs.add(buffer)).path }) */
 
+    if (this.state.selectedFile) {
+      const [file] = this.state.selectedFile
+
+      const buffer = Buffer.from(await file.arrayBuffer())
+      console.log(buffer)
+      this.setState({ identicon: 'ipfs://' + (await ipfs.add(buffer)).path })
+    }
+
+    console.log(this.state)
     this.context.registry(
       this.state.subjkt,
       await ipfs.add(
-        Buffer.from(JSON.stringify({ description: this.state.description }))
+        Buffer.from(JSON.stringify({ description: this.state.description, identicon: this.state.identicon }))
       )
     )
   }
 
   // upload file
 
-  onFileChange = (event) => {
+  onFileChange = async (event) => {
     this.setState({
       selectedFile: event.target.files,
       fileTitle: event.target.files[0].name,
     })
+
+    const [file] = event.target.files
+
+    const buffer = Buffer.from(await file.arrayBuffer())
+    this.setState({ identicon: 'ipfs://' + (await ipfs.add(buffer)).path })
+     
   }
 
   hDAO_operators = () => {
@@ -94,7 +164,7 @@ export class Config extends Component {
        console.log(payload)
        this.context.sign(payload) 
        
-       */
+  */
 
   sign = () => {
     console.log(this.context.addr)
@@ -116,14 +186,21 @@ export class Config extends Component {
   render() {
     return (
       <Page>
+        
         <Container>
+
+          <Identicon address={this.state.address} logo={this.state.identicon} />
+        
+          <div style={{ height: '20px' }}></div>
+          <input type="file" onChange={this.onFileChange} />
+          <div style={{ height: '20px' }}></div>
           <Padding>
             <Input
               name="subjkt"
               onChange={this.handleChange}
               placeholder="Username"
               label="Username"
-              value={this.state.subjkt}
+              value={this.context.subjktInfo ? this.context.subjktInfo.name : undefined}
             />
             <Input
               name="description"
@@ -136,7 +213,7 @@ export class Config extends Component {
               <Curate>Save Profile</Curate>
             </Button>
           </Padding>
-          <p style={{fontSize : "12px"}}> one can link their twitter account through <a href="https://tzprofiles.com">tz profiles</a></p>
+          <p>link your twitter account with <a href="https://tzprofiles.com">tz profiles</a></p>
         </Container>
 
         <Container>
@@ -157,13 +234,16 @@ export class Config extends Component {
           </Padding>
         </Container>
 
-{/*         <Container>
+        {/*         <Container>
           <Padding>
             <Button onClick={this.unregister}>
               <Curate>Unregister</Curate>
             </Button>
           </Padding>
         </Container> */}
+        {/*         <BottomBanner>
+          The dApp has been temporarily disabled for a contract migration. Follow <a href="https://twitter.com/hicetnunc2000" target="_blank">@hicetnunc2000</a> or <a href="https://discord.gg/jKNy6PynPK" target="_blank">join the discord</a> for updates.
+        </BottomBanner> */}
       </Page>
     )
   }

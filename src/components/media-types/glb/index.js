@@ -3,7 +3,6 @@ import styles from './styles.module.scss'
 
 export const GLBComponent = ({
   artifactUri,
-  displayUri,
   previewUri,
   preview,
   onDetailView,
@@ -14,7 +13,6 @@ export const GLBComponent = ({
   const [height, setHeight] = useState('100px')
 
   const props = {
-    className: styles.glb,
     src: preview ? previewUri : artifactUri,
     autoplay: true,
     'auto-rotate': true,
@@ -56,10 +54,9 @@ export const GLBComponent = ({
       </div>
     )
   } else {
-
     return (
       <div>
-        <model-viewer {...props} style={{ height: '60vh', width: '100vw' }} >
+        <model-viewer {...props}>
           <button slot="ar-button" className={styles.arButton}>
             AR
           </button>

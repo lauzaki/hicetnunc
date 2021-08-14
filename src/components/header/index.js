@@ -36,7 +36,8 @@ export const Header = () => {
   if (context.acc?.address) {
     // is menu closed?
     if (context.collapsed) {
-      button = walletPreview(context.acc.address)
+      const proxyAddress = context.proxyAddress ? ' (' + context.proxyAddress + ')' : ''
+      button = walletPreview(context.acc.address) + proxyAddress
     } else {
       // menu is open
       button = 'unsync'
@@ -67,7 +68,7 @@ export const Header = () => {
           <Button onClick={() => handleRoute('/')}>
             <div className={styles.logo}>
               {/* HIC LOGO */}
-              {false && (
+              {true && (
                 <svg viewBox="0 0 196.87 53.23" fill={'var(--text-color)'}>
                   <path
                     d="M228.9,79.31H211.51a2.26,2.26,0,0,1-.35-.34.75.75,0,0,1-.16-.42c0-11.42,0-22.85,0-34.43H193.24v35H175.41V26.27H228.9Z"
@@ -88,7 +89,7 @@ export const Header = () => {
                 </svg>
               )}
               {/* PRIDE LOGO */}
-              {true && <img src="/hen-pride.gif" alt="pride 2021" />}
+              {false && <img src="/hen-pride.gif" alt="pride 2021" />}
             </div>
           </Button>
 
@@ -136,12 +137,17 @@ export const Header = () => {
                         </Primary>
                       </Button>
                     </li>
+{/*                     <li>
+                      <Button onClick={() => handleRoute('/collaborate')}>
+                        <Primary>collaborate</Primary>
+                      </Button>
+                    </li> */}
                     <li>
                       <Button onClick={() => handleRoute('/sync')}>
                         <Primary>manage assets</Primary>
                       </Button>
                     </li>
-                                        {context.acc?.address ?
+                    { context.acc?.address ?
                       <li>
                         <Button onClick={() => handleRoute('/config')}>
                           <Primary>settings</Primary>

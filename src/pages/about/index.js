@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import { Page, Container, Padding } from '../../components/layout'
 import { Button, Primary } from '../../components/button'
 import { HicetnuncContext } from '../../context/HicetnuncContext'
+import { BottomBanner } from '../../components/bottom-banner'
 import { getLanguage } from '../../constants'
 import styles from './styles.module.scss'
 
@@ -50,15 +51,21 @@ export class About extends Component {
         <Container>
           <Padding>
             <div className={styles.buttons}>
-              <p>For consulting, networking or questions get in touch by</p>
+              <p>Join or contact hic et nunc on</p>
               &nbsp;
+              <Button href="https://hicetnunc2000.medium.com">
+                <Primary>
+                  <strong>medium</strong>
+                </Primary>
+              </Button>
+              <p>,</p>&nbsp;
               <Button href="mailto:hicetnunc2000@protonmail.com">
                 <Primary>
                   <strong>email</strong>
                 </Primary>
               </Button>
               <p>,</p>&nbsp;
-              <Button href="https://discord.gg/jKNy6PynPK">
+              <Button href="https://discord.gg/XWCPjXUYeN">
                 <Primary>
                   <strong>discord</strong>
                 </Primary>
@@ -69,12 +76,18 @@ export class About extends Component {
                   <strong>reddit</strong>
                 </Primary>
               </Button>
-              <p>, or on</p>&nbsp;
+              <p>,</p>&nbsp;
               <Button href="https://t.me/hicetnunc2000">
                 <Primary>
                   <strong>telegram</strong>
                 </Primary>
               </Button>
+              or through our
+              &nbsp;<Button href="https://community.hicetnunc.xyz">
+                <Primary>
+                  <strong>community forum</strong>
+                </Primary>
+              </Button>.
             </div>
           </Padding>
         </Container>
@@ -93,10 +106,9 @@ export class About extends Component {
         </Container>
         <Container>
           <Padding>
-            <p>Community tools:</p>&nbsp;
-            <Button href="https://projects.stroep.nl/hicetnunc">
+            <Button href="https://github.com/hicetnunc2000/hicetnunc/wiki/Tools-made-by-the-community">
               <Primary>
-                <strong>hicetnunc discovery</strong>
+                <strong>Community tools</strong>
               </Primary>
             </Button>
             {false && (
@@ -121,6 +133,9 @@ export class About extends Component {
             </div>
           </Padding>
         </Container>
+{/*         <BottomBanner>
+        Collecting has been temporarily disabled. Follow <a href="https://twitter.com/hicetnunc2000" target="_blank">@hicetnunc2000</a> or <a href="https://discord.gg/jKNy6PynPK" target="_blank">join the discord</a> for updates.
+        </BottomBanner> */}
       </Page>
     )
   }

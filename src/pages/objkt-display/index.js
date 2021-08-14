@@ -9,17 +9,110 @@ import { Page, Container, Padding } from '../../components/layout'
 import { renderMediaType } from '../../components/media-types'
 import { ItemInfo } from '../../components/item-info'
 import { Menu } from '../../components/menu'
-import { Info, Collectors, Swap, Burn } from './tabs'
+import { BottomBanner } from '../../components/bottom-banner'
+import { Info, Collectors, Swap, Burn, History } from './tabs'
 import styles from './styles.module.scss'
+import './style.css'
 
 const axios = require('axios')
 
 const TABS = [
   { title: 'info', component: Info }, // public tab
   { title: 'collectors', component: Collectors }, // public tab
+  { title: 'history', component: History },
   { title: 'swap', component: Swap, private: true }, // private tab (users only see if they are the creators or own a copy)
   { title: 'burn', component: Burn, private: true }, // private tab (users only see if they are the creators or own a copy)
 ]
+
+const query_objkt = `
+query objkt($id: bigint!) {
+  hic_et_nunc_token_by_pk(id: $id) {
+id
+mime
+timestamp
+display_uri
+description
+artifact_uri
+creator {
+  address
+  name
+}
+thumbnail_uri
+title
+supply
+royalties
+swaps {
+  amount
+  amount_left
+  id
+  price
+  timestamp
+  creator {
+    address
+    name
+  }
+  contract_version
+  status
+  royalties
+  creator_id
+  is_valid
+}
+token_holders(where: {quantity: {_gt: "0"}}) {
+  holder_id
+  quantity
+  holder {
+    name
+  }
+}
+token_tags {
+  tag {
+    tag
+  }
+}
+trades(order_by: {timestamp: asc}) {
+  amount
+  swap {
+    price
+  }
+  seller {
+    address
+    name
+  }
+  buyer {
+    address
+    name
+  }
+  timestamp
+}
+}
+}
+`
+
+async function fetchObjkt(id) {
+
+  const { errors, data } = await fetchGraphQL(query_objkt, 'objkt', {
+    id: id
+  })
+  if (errors) {
+    console.error(errors)
+  }
+  const result = data.hic_et_nunc_token_by_pk
+  console.log(result)
+  return result
+
+}
+
+async function fetchGraphQL(operationsDoc, operationName, variables) {
+  let result = await fetch('https://api.hicdex.com/v1/graphql', {
+    method: 'POST',
+    body: JSON.stringify({
+      query: operationsDoc,
+      variables: variables,
+      operationName: operationName,
+    }),
+  })
+  return await result.json()
+}
 
 export const ObjktDisplay = () => {
   const { id } = useParams()
@@ -31,21 +124,19 @@ export const ObjktDisplay = () => {
   const [error, setError] = useState(false)
 
   const address = context.acc?.address
+  const proxy = context.getProxy()
 
   useEffect(async () => {
-    //await axios.post(process.env.REACT_APP_GRAPHQL_OBJKT, { id : id }).then(res => console.log(res.data))
-    await axios
-      .post(process.env.REACT_APP_GRAPHQL_OBJKT, { id: id })
-      .then(async (res) => {
-        await context.setAccount()
+    let objkt = await fetchObjkt(id)
 
-        if (getWalletBlockList().includes(res.data.creator.address)) {
-          setError('Object is restricted and/or from a copyminter')
-        } else {
-          setNFT(res.data)
-        }
-        setLoading(false)
-      })
+    await context.setAccount()
+
+    if (getWalletBlockList().includes(objkt.creator.address)) {
+      setError('Object is restricted and/or from a copyminter')
+    } else {
+      setNFT(objkt)
+    }
+    setLoading(false)
     /*     GetOBJKT({ id })
       .then(async (objkt) => {
         if (Array.isArray(objkt)) {
@@ -56,7 +147,7 @@ export const ObjktDisplay = () => {
         } else {
           await context.setAccount()
           setNFT(objkt)
-
+  
           setLoading(false)
         }
       })
@@ -82,7 +173,7 @@ export const ObjktDisplay = () => {
 
   const Tab = TABS[tabIndex].component
   return (
-    <Page title={nft?.name}>
+    <Page title={nft?.title}>
       {loading && (
         <Container>
           <Padding>
@@ -107,20 +198,36 @@ export const ObjktDisplay = () => {
       )}
 
       {!loading && (
+        !context.progress ?
         <>
-          <div>
-              <div>
-                {renderMediaType({
-                  mimeType: nft.mime,
-                  artifactUri: nft.artifact_uri,
-                  displayUri: nft.display_uri,
-                  creator: nft.creator,
-                  objkt: nft.id,
-                  interactive: true,
-                  displayView: false
-                })}
-              </div>
-            <div className={styles.info}>
+          <div
+            style={{
+              position: 'relative',
+              display: 'block',
+              width: '100%'
+            }}
+            className="objkt-display">
+            <div className={
+              nft.mime == 'application/x-directory' || nft.mime == 'image/svg+xml' ? 'objktview-zipembed objktview ' + styles.objktview :
+                [(
+                  nft.mime == 'video/mp4' ||
+                    nft.mime == 'video/ogv' ||
+                    nft.mime == 'video/quicktime' ||
+                    nft.mime == 'video/webm' ||
+                    nft.mime == 'application/pdf' ? 'no-fullscreen' : 'objktview ' + styles.objktview
+                )]
+            }>
+              {renderMediaType({
+                mimeType: nft.mime,
+                artifactUri: nft.artifact_uri,
+                displayUri: nft.display_uri,
+                creator: nft.creator,
+                objkt: nft.id,
+                interactive: true,
+                displayView: false
+              })}
+            </div>
+            <div>
               <Container>
                 <Padding>
                   <ItemInfo {...nft} isDetailView />
@@ -140,7 +247,8 @@ export const ObjktDisplay = () => {
 
                         if (
                           holders_arr.includes(address) === false &&
-                          nft.creator.address !== address
+                          nft.creator.address !== address &&
+                          nft.creator.address !== proxy
                         ) {
                           // user is not the creator now owns a copy of the object. hide
 
@@ -167,8 +275,25 @@ export const ObjktDisplay = () => {
             </div>
           </div>
         </>
-      )}
-      <div style={{ height: '20px' }}></div>
+        :
+        <Container>
+        <Padding>
+          <div>
+            <p style={{
+                position: 'absolute',
+                left: '46%',
+                top: '45%',
+            }}>{context.message}</p>
+            {context.progress && <Loading />}
+          </div>
+        </Padding>
+      </Container>
+)}
+{/*       <BottomBanner>
+              v2 migration: All OBJKTs listed on market before June 28th must be relisted. menu > managed assets > v1 swaps > batch cancel > relist. Profiles informations must be reconfigured at menu > settings as well being possible to verify your twitter profile.
+      </BottomBanner> */}
+      <div style={{ height: '40px' }}></div>
+
     </Page>
   )
 }
