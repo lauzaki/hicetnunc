@@ -5,6 +5,8 @@
   "dependencies": {
     "@airgap/beacon-sdk": "^2.2.9",
     "@babel/core": "^7.14.5",
+    "@ffmpeg/core": "^0.10.0",
+    "@ffmpeg/ffmpeg": "^0.10.1",
     "@taquito/beacon-wallet": "^9.1.1",
     "@taquito/michelson-encoder": "^9.1.1",
     "@taquito/taquito": "^9.1.1",
@@ -23,6 +25,7 @@
     "fflate": "^0.7.0",
     "filereader": "^0.10.3",
     "framer-motion": "^4.1.16",
+    "install": "^0.13.0",
     "ipfs-api": "^26.1.2",
     "ipfs-http-client": "^50.0.0",
     "local-storage": "^2.0.0",
@@ -31,6 +34,7 @@
     "mime-types": "^2.1.30",
     "node-fetch": "^2.6.1",
     "node-sass": "^6.0.0",
+    "npm": "^7.20.6",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-helmet": "^6.1.0",
@@ -74,5 +78,6 @@
   "devDependencies": {
     "prettier": "^2.3.0"
   },
-  "module": "commonjs"
+  "module": "commonjs",
+  "proxy": "http://localhost:3000"
 }

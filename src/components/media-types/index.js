@@ -90,6 +90,7 @@ export const renderMediaType = ({
   let parsedArtifactUri
   let parsedDisplayUri
   console.log('display', displayView)
+  console.log(mimeType)
   switch (mimeType) {
     /* IMAGES */
     case MIMETYPE.BMP:

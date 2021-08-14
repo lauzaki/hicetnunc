@@ -8,6 +8,7 @@ import { Upload } from '../../components/upload'
 import { Preview } from '../../components/preview'
 import { prepareFile, prepareDirectory } from '../../data/ipfs'
 import { prepareFilesFromZIP } from '../../utils/html'
+import { createFFmpeg } from '@ffmpeg/ffmpeg'
 import {
   ALLOWED_MIMETYPES,
   ALLOWED_FILETYPES_LABEL,
@@ -19,6 +20,7 @@ import {
   MIN_ROYALTIES,
   MAX_ROYALTIES,
 } from '../../constants'
+import { contentType } from 'mime-types'
 
 const coverOptions = {
   quality: 0.85,
@@ -158,8 +160,25 @@ export const Mint = () => {
     setStep(1)
   }
 
+  const [mp3Link, setMp3Link] = useState();
   const handleFileUpload = async (props) => {
-    setFile(props)
+
+console.log(props)
+      const ffmpeg = createFFmpeg({ 
+        corePath: 'https://unpkg.com/@ffmpeg/core@0.10.0/dist/ffmpeg-core.js',
+        log: true });
+      await ffmpeg.load();
+      ffmpeg.FS('writeFile', 'audio.wav', props.buffer);
+      await ffmpeg.run('-i', 'audio.wav', '-ar', '44100', '-ac', '2', '-b:a',  '192k', 'output.mp3');
+      const compressed = ffmpeg.FS('readFile', 'output.mp3');
+      console.log(compressed)
+      const url = window.URL.createObjectURL(new Blob([compressed.buffer], { type: 'audio/mp3' }));
+     // window.location.assign(url);
+  
+      setMp3Link(url)
+      console.log(compressed)
+    
+    setFile(compressed)
 
     if (GENERATE_DISPLAY_AND_THUMBNAIL) {
       if (props.mimeType.indexOf('image') === 0) {
@@ -318,6 +337,7 @@ export const Mint = () => {
                 onChange={handleFileUpload}
               />
             </Padding>
+            <a href={mp3Link}>test link</a>
           </Container>
 
           {file && needsCover && (
